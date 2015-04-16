@@ -49,14 +49,44 @@ getDataByAgeGroup <-function(data,agegrp){
 } 
 
 # Line Chart 
-lineChart <- function(data,agegrp){ 
-  if(!is.null(agegrp)){
+lineChart <- function(data,agegrp,indicator){ 
+  
+  if(indicator$rate == "Y"){
     
+    selection <- data
+    selection$rate <- (selection$numerator/selection$denominator)*indicator$multiplier
+    selection$sex <- ifelse(selection$sex == 1, "MALE", "FEMALE")
+    max_y <- round_any(max(selection$rate), 10, f = ceiling)   
+    min_y <- round_any(min(selection$rate), 10, f = floor)    
+    selection <- getDataByAgeGroup(selection,agegrp)
+    
+    plot <- nPlot(rate ~ year,
+                  data = selection,
+                  type = "lineChart",
+                  group = "sex",
+                  height = 250,
+                  width = 450 )    
+    
+    # Explicitly set year tick values for every year
+    plot$xAxis(tickValues = do.call(seq, c(as.list(range(selection$year)), 1)),rotateLabels= -40,showMaxMin = "true")
+    
+    plot$chart(useInteractiveGuideline = "true", transitionDuration = 500)  
+    
+    plot$chart(forceY = c(min_y, max_y))
+    # Add axis labels and format the tooltip
+    plot$yAxis(axisLabel = paste("Rate per",indicator$multiplier), width = 62)
+    
+    plot$xAxis(axisLabel = "Year")
+    
+    return(plot)     
+    
+    
+  }else{
     selection <- data
     selection$sex <- ifelse(selection$sex == 1, "MALE", "FEMALE")
     #cat("MaxY:",round_any(max(selection$denominator), 100, f = ceiling))
-    max_y <- round_any(max(selection$denominator), 100, f = ceiling)   
-    min_y <- round_any(min(selection$denominator), 100, f = floor)    
+    max_y <- round_any(max(selection$denominator), 10, f = ceiling)   
+    min_y <- round_any(min(selection$denominator), 10, f = floor)    
     selection <- getDataByAgeGroup(selection,agegrp)
     
     plot <- nPlot(denominator ~ year,
@@ -78,7 +108,12 @@ lineChart <- function(data,agegrp){
     plot$xAxis(axisLabel = "Year")
     
     return(plot)     
-  }    
+    
+    
+  }
+  
+    
+    
 }
 
 
@@ -232,106 +267,89 @@ ui <- dashboardPage(
 )
 
 
-server <- function(input, output) {   
+server <- function(input, output) {
   
   output$choose_dataset <- renderUI({
     selectInput("outcome", "Select Outcome", choices, selected="Population Structure",width="95%")
   })
   
-  
+  output$choose_agegrp <- renderUI({
+    selectInput("agegrp", "Select Age Group", 
+                choices = c("00-04","05-09","10-14","15-19","20-24","25-29",
+                            "30-34","35-39","40-44","45-49","50-54",
+                            "55-59","60-64","65-69","70-74","75-79",
+                            "80-84","85+"), selected="00-04",width="95%")
+  })
+  #############################################################
   observe({
     
-    if(length(input$outcome) != 0){
+    if(!is.null(input$outcome)
+       & !is.null(input$agegrp)){
+      
       selected_outcome <- input$outcome          
       selected_indicator <- subset(indicators,indicators$label == selected_outcome)
       
       outcome_data <- reactive({
         read.csv(selected_indicator$file)
       })
-    } else if(length(input$outcome) == 0){
-      outcome_data <- reactive({
-        read.csv(indicators$file[1])
+      
+      d <- reactive({outcome_data()})
+      minYear <- reactive({min(d()$year)})
+      maxYear <- reactive({max(d()$year)})
+      
+      observe({
+        if(input$doAnimate){
+          output$distPlot <- renderDimple({
+            dPyramid(minYear(), maxYear(),data = outcome_data(), indicator = selected_indicator)
+          })
+          
+        }else{
+          output$distPlot <- renderDimple({
+            startyear <- as.numeric(input$startyr) 
+            # Start year and end year are equal we only want cross-sectional pyramid
+            # for a single selected year
+            dPyramid(startyear, startyear, data = outcome_data(),indicator = selected_indicator)
+          })    
+        }
       })
-    }
-    
-    
-    
-    d <- reactive({outcome_data()})
-    
-    output$choose_agegrp <- renderUI({
-      selectInput("agegrp", "Select Age Group", 
-                  choices = c("00-04","05-09","10-14","15-19","20-24","25-29",
-                              "30-34","35-39","40-44","45-49","50-54",
-                              "55-59","60-64","65-69","70-74","75-79",
-                              "80-84","85+"), selected="00-04",width="95%")
-    })
-    
-    minYear <- reactive({min(d()$year)})
-    maxYear <- reactive({max(d()$year)})
-    
-    observe({
-      if(input$doAnimate){
-        output$distPlot <- renderDimple({
-          dPyramid(minYear(), maxYear(),data = outcome_data(), indicator = selected_indicator)
-        })
+      
+      output$caption <- renderText({
+        return(paste("You are currently viewing",
+                     ifelse(selected_indicator$rate=="N",paste(input$outcome,".\n",selected_indicator$description),
+                            paste(input$outcome,"(per",selected_indicator$multiplier,"population).\n",selected_indicator$description))))
+      })
+      ################################################
+      # Line chart
+      ################################################
+      output$distPlot2 <- renderChart2({    
+        lineChart(outcome_data(),input$agegrp,selected_indicator)    
+      })
+      
+      #################################################
+      # HEATMAP 
+      #################################################
+      
+      reactive({getHeatMapData(outcome_data())}) %>% 
+        ggvis(~year, ~agegrp, fill = ~rowtotal) %>% 
+        layer_rects(width = band(), height = band()) %>%
+        add_relative_scales() %>%
+        set_options(height = 200, width = 410, keep_aspect = TRUE) %>% 
+        add_axis("y", title="")%>%
+        scale_nominal("x", padding = 0, points = FALSE) %>%
+        scale_nominal("y", padding = 0, points = FALSE) %>% 
+        scale_numeric("fill",range = c("lightsteelblue","red")) %>% 
+        hide_legend("fill") %>%
+        add_tooltip(function(d) {
+          if(is.null(d)) return(NULL)
+          paste0(names(d), ": ", format(d), collapse = "<br />") 
+        }         
         
-      }else{
-        output$distPlot <- renderDimple({
-          startyear <- as.numeric(input$startyr) 
-          # Start year and end year are equal we only want cross-sectional pyramid
-          # for a single selected year
-          dPyramid(startyear, startyear, data = outcome_data(),indicator = selected_indicator)
-        })    
-      }
-    })
-    
-    observe({
-      if(!is.null(input$outcome)){
-        output$caption <- renderText({
-          return(paste("You are currently viewing",
-                       ifelse(selected_indicator$rate=="N",paste(input$outcome,".\n",selected_indicator$description),
-                              paste(input$outcome,"(per",selected_indicator$multiplier,"population).\n",selected_indicator$description))))
-        })
-      }
+        ) %>%        
+        
+        bind_shiny("heatmap")
       
-    })
-    
-    
-    ################################################
-    # Line chart
-    ################################################
-    
-    observe({
-      if(!is.null(input$agegrp)){
-        output$distPlot2 <- renderChart2({    
-          lineChart(outcome_data(),input$agegrp)    
-        })
-      }
       
-    })
-    
-    #################################################
-    # HEATMAP 
-    #################################################
-    
-    reactive({getHeatMapData(outcome_data())}) %>% 
-      ggvis(~year, ~agegrp, fill = ~rowtotal) %>% 
-      layer_rects(width = band(), height = band()) %>%
-      add_relative_scales() %>%
-      set_options(height = 200, width = 410, keep_aspect = TRUE) %>% 
-      add_axis("y", title="")%>%
-      scale_nominal("x", padding = 0, points = FALSE) %>%
-      scale_nominal("y", padding = 0, points = FALSE) %>% 
-      scale_numeric("fill",range = c("lightsteelblue","red")) %>% 
-      hide_legend("fill") %>%
-      add_tooltip(function(d) {
-        if(is.null(d)) return(NULL)
-        paste0(names(d), ": ", format(d), collapse = "<br />") 
-      }         
-      
-      ) %>%        
-      
-      bind_shiny("heatmap")
+    }
     
   })
   
