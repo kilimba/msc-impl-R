@@ -302,7 +302,7 @@ server <- function(input, output) {
           output$distPlot <- renderDimple({
             dPyramid(minYear(), maxYear(),data = outcome_data(), indicator = selected_indicator)
           })
-          
+          #baaa
         }else{
           output$distPlot <- renderDimple({
             startyear <- as.numeric(input$startyr) 
