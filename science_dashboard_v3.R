@@ -282,6 +282,40 @@ server <- function(input, output) {
   })
   #############################################################
   observe({
+    if(!is.null(input$outcome)){
+      selected_outcome <- input$outcome          
+      selected_indicator <- subset(indicators,indicators$label == selected_outcome)
+      
+      outcome_data <- reactive({
+        read.csv(selected_indicator$file)
+      })
+      
+      d <- reactive({outcome_data()})
+      
+      minYear <- reactive({min(d()$year)})
+      maxYear <- reactive({max(d()$year)})
+      
+      observe({
+        if(input$doAnimate){
+          output$distPlot <- renderDimple({
+            dPyramid(minYear(), maxYear(),data = outcome_data(), indicator = selected_indicator)
+          })
+          
+        }else{
+          output$distPlot <- renderDimple({
+            startyear <- as.numeric(input$startyr) 
+            # Start year and end year are equal we only want cross-sectional pyramid
+            # for a single selected year
+            dPyramid(startyear, startyear, data = outcome_data(),indicator = selected_indicator)
+          })    
+        }
+      })
+      
+    }
+    
+  })
+  
+  observe({
     
     if(!is.null(input$outcome)
        & !is.null(input$agegrp)){
@@ -294,24 +328,6 @@ server <- function(input, output) {
       })
       
       d <- reactive({outcome_data()})
-      minYear <- reactive({min(d()$year)})
-      maxYear <- reactive({max(d()$year)})
-      
-      observe({
-        if(input$doAnimate){
-          output$distPlot <- renderDimple({
-            dPyramid(minYear(), maxYear(),data = outcome_data(), indicator = selected_indicator)
-          })
-          #baaa
-        }else{
-          output$distPlot <- renderDimple({
-            startyear <- as.numeric(input$startyr) 
-            # Start year and end year are equal we only want cross-sectional pyramid
-            # for a single selected year
-            dPyramid(startyear, startyear, data = outcome_data(),indicator = selected_indicator)
-          })    
-        }
-      })
       
       output$caption <- renderText({
         return(paste("You are currently viewing",
