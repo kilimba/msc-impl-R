@@ -20,19 +20,28 @@ choices <- as.vector(indicators$label)
 indicators$label <- as.character(indicators$label)
 indicators$file <- paste("",indicators$file,"",sep="")
 
-getHeatMapData <- function(data){
+getHeatMapData <- function(data,indicator){
+  
   df <- data
-  df$sex <- ifelse(df$sex == 1, "MAL", "FEM")
-  hmap_df <- (dcast(df,year+agegrp ~ sex,value.var="denominator"))
-  hmap_df$rowtotal <- hmap_df$MAL + hmap_df$FEM
+  
+  if(indicator$rate == "Y"){
+    
+    hmap_df <- aggregate(cbind(denominator,numerator) ~ year + agegrp,df,sum)
+    hmap_df$rate <- round((hmap_df$numerator/hmap_df$denominator)*indicator$multiplier,2)
+    names(hmap_df)
+    
+  }else{  
+    hmap_df <- aggregate(denominator ~ agegrp + year,df, sum)     
+  }
   
   hmap_df$year <- factor(hmap_df$year)
   
-  # Helps to order the y-axis labels otherwise labels appear in 
-  # mixed order
+  # Helps to order the y-axis labels otherwise labels appear in mixed order
   hmap_df$agegrp <- factor(hmap_df$agegrp, levels = rev(as.vector(unique(hmap_df$agegrp))))
   return(hmap_df)
+  
 }
+
 
 getData <- function(startyr,endyear,outcome_data) {
   data <- subset(outcome_data,(year >= startyr & year <= endyear))
@@ -48,13 +57,12 @@ getDataByAgeGroup <-function(data,agegrp){
   return(selection)
 } 
 
-# Line Chart 
 lineChart <- function(data,agegrp,indicator){ 
   
   if(indicator$rate == "Y"){
     
     selection <- data
-    selection$rate <- (selection$numerator/selection$denominator)*indicator$multiplier
+    selection$rate <- round((selection$numerator/selection$denominator)*indicator$multiplier,2)
     selection$sex <- ifelse(selection$sex == 1, "MALE", "FEMALE")
     max_y <- round_any(max(selection$rate), 10, f = ceiling)   
     min_y <- round_any(min(selection$rate), 10, f = floor)    
@@ -84,7 +92,6 @@ lineChart <- function(data,agegrp,indicator){
   }else{
     selection <- data
     selection$sex <- ifelse(selection$sex == 1, "MALE", "FEMALE")
-    #cat("MaxY:",round_any(max(selection$denominator), 100, f = ceiling))
     max_y <- round_any(max(selection$denominator), 10, f = ceiling)   
     min_y <- round_any(min(selection$denominator), 10, f = floor)    
     selection <- getDataByAgeGroup(selection,agegrp)
@@ -107,15 +114,56 @@ lineChart <- function(data,agegrp,indicator){
     
     plot$xAxis(axisLabel = "Year")
     
-    return(plot)     
+    return(plot)    
+  }    
+}
+# Heat Map
+
+heatmap <- function(data,indicator){
+  
+  dat <- getHeatMapData(data,indicator)
+  
+  if(indicator$rate == "Y"){    
+    dat %>% 
+      ggvis(~year, ~agegrp, fill = ~rate) %>% 
+      layer_rects(width = band(), height = band()) %>%
+      add_relative_scales() %>%
+      set_options(height = 200, width = 410, keep_aspect = TRUE) %>% 
+      add_axis("y", title="")%>%
+      scale_nominal("x", padding = 0, points = FALSE) %>%
+      scale_nominal("y", padding = 0, points = FALSE) %>% 
+      scale_numeric("fill",range = c("lightsteelblue","red")) %>% 
+      hide_legend("fill") %>%
+      add_tooltip(function(d) {
+        if(is.null(d)) return(NULL)
+        paste0(names(d), ": ", format(d), collapse = "<br />") 
+      }         
+      
+      ) %>%          
+      bind_shiny("heatmap")
     
+  }else{
     
+    dat %>% 
+      ggvis(~year, ~agegrp, fill = ~denominator) %>% 
+      layer_rects(width = band(), height = band()) %>%
+      add_relative_scales() %>%
+      set_options(height = 200, width = 410, keep_aspect = TRUE) %>% 
+      add_axis("y", title="")%>%
+      scale_nominal("x", padding = 0, points = FALSE) %>%
+      scale_nominal("y", padding = 0, points = FALSE) %>% 
+      scale_numeric("fill",range = c("lightsteelblue","red")) %>% 
+      hide_legend("fill") %>%
+      add_tooltip(function(d) {
+        if(is.null(d)) return(NULL)
+        paste0(names(d), ": ", format(d), collapse = "<br />") 
+      }         
+      
+      ) %>%          
+      bind_shiny("heatmap")
   }
   
-    
-    
 }
-
 
 # DimpleJS pyramid
 
@@ -281,6 +329,9 @@ server <- function(input, output) {
                             "80-84","85+"), selected="00-04",width="95%")
   })
   #############################################################
+  # PYRAMID
+  #############################################################
+  
   observe({
     if(!is.null(input$outcome)){
       selected_outcome <- input$outcome          
@@ -314,6 +365,7 @@ server <- function(input, output) {
     }
     
   })
+  ###############################################
   
   observe({
     
@@ -345,25 +397,25 @@ server <- function(input, output) {
       # HEATMAP 
       #################################################
       
-      reactive({getHeatMapData(outcome_data())}) %>% 
-        ggvis(~year, ~agegrp, fill = ~rowtotal) %>% 
-        layer_rects(width = band(), height = band()) %>%
-        add_relative_scales() %>%
-        set_options(height = 200, width = 410, keep_aspect = TRUE) %>% 
-        add_axis("y", title="")%>%
-        scale_nominal("x", padding = 0, points = FALSE) %>%
-        scale_nominal("y", padding = 0, points = FALSE) %>% 
-        scale_numeric("fill",range = c("lightsteelblue","red")) %>% 
-        hide_legend("fill") %>%
-        add_tooltip(function(d) {
-          if(is.null(d)) return(NULL)
-          paste0(names(d), ": ", format(d), collapse = "<br />") 
-        }         
-        
-        ) %>%        
-        
-        bind_shiny("heatmap")
-      
+#       reactive({getHeatMapData(outcome_data())}) %>% 
+#         ggvis(~year, ~agegrp, fill = ~rowtotal) %>% 
+#         layer_rects(width = band(), height = band()) %>%
+#         add_relative_scales() %>%
+#         set_options(height = 200, width = 410, keep_aspect = TRUE) %>% 
+#         add_axis("y", title="")%>%
+#         scale_nominal("x", padding = 0, points = FALSE) %>%
+#         scale_nominal("y", padding = 0, points = FALSE) %>% 
+#         scale_numeric("fill",range = c("lightsteelblue","red")) %>% 
+#         hide_legend("fill") %>%
+#         add_tooltip(function(d) {
+#           if(is.null(d)) return(NULL)
+#           paste0(names(d), ": ", format(d), collapse = "<br />") 
+#         }         
+#         
+#         ) %>%        
+#         
+#         bind_shiny("heatmap")
+          heatmap(outcome_data(),selected_indicator)      
       
     }
     
