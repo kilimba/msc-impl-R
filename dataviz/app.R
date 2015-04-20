@@ -21,7 +21,7 @@ indicators$label <- as.character(indicators$label)
 indicators$file <- paste("",indicators$file,"",sep="")
 
 getHeatMapData <- function(data,indicator){
-  
+  browser()
   df <- data
   
   if(indicator$rate == "Y"){
@@ -122,7 +122,7 @@ lineChart <- function(data,agegrp,indicator){
 # Heat Map
 
 heatmap <- function(data,indicator){
-  
+  browser()
   dat <- getHeatMapData(data,indicator)
   
   if(indicator$rate == "Y"){   
@@ -363,7 +363,7 @@ server <- function(input, output) {
       selected_indicator <- subset(indicators,indicators$label == selected_outcome)
       
       outcome_data <- reactive({
-        read.csv(selected_indicator$file)
+        read.csv(curl(as.character(selected_indicator$file)))
       })
       
       d <- reactive({outcome_data()})
@@ -395,13 +395,14 @@ server <- function(input, output) {
   observe({
     
     if(!is.null(input$outcome)
-       & !is.null(input$agegrp)){
+       & !is.null(input$agegrp)){     
       
-      selected_outcome <- input$outcome          
+      
+      selected_outcome <- input$outcome 
       selected_indicator <- subset(indicators,indicators$label == selected_outcome)
       
       outcome_data <- reactive({
-        read.csv(selected_indicator$file)
+        read.csv(curl(as.character(selected_indicator$file)))
       })
       
       d <- reactive({outcome_data()})
@@ -421,25 +422,7 @@ server <- function(input, output) {
       #################################################
       # HEATMAP 
       #################################################
-      
-      #       reactive({getHeatMapData(outcome_data())}) %>% 
-      #         ggvis(~year, ~agegrp, fill = ~rowtotal) %>% 
-      #         layer_rects(width = band(), height = band()) %>%
-      #         add_relative_scales() %>%
-      #         set_options(height = 200, width = 410, keep_aspect = TRUE) %>% 
-      #         add_axis("y", title="")%>%
-      #         scale_nominal("x", padding = 0, points = FALSE) %>%
-      #         scale_nominal("y", padding = 0, points = FALSE) %>% 
-      #         scale_numeric("fill",range = c("lightsteelblue","red")) %>% 
-      #         hide_legend("fill") %>%
-      #         add_tooltip(function(d) {
-      #           if(is.null(d)) return(NULL)
-      #           paste0(names(d), ": ", format(d), collapse = "<br />") 
-      #         }         
-      #         
-      #         ) %>%        
-      #         
-      #         bind_shiny("heatmap")
+    
       heatmap(outcome_data(),selected_indicator)      
       
     }
