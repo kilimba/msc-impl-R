@@ -21,7 +21,6 @@ indicators$label <- as.character(indicators$label)
 indicators$file <- paste("",indicators$file,"",sep="")
 
 getHeatMapData <- function(data,indicator){
-  browser()
   df <- data
   
   if(indicator$rate == "Y"){
@@ -122,7 +121,6 @@ lineChart <- function(data,agegrp,indicator){
 # Heat Map
 
 heatmap <- function(data,indicator){
-  browser()
   dat <- getHeatMapData(data,indicator)
   
   if(indicator$rate == "Y"){   
@@ -181,7 +179,6 @@ dPyramid <- function(startyear, endyear, data, colors=c("steelblue","firebrick")
     dat$denominator <- ifelse(dat$sex == 1, -1 * dat$denominator, 1 * dat$denominator)
     dat$Gender <- ifelse(dat$sex == 1,"Male", "Female")
     dat$Rate <- (dat$numerator/dat$denominator)*indicator$multiplier
-    
     max_x <- round_any(max(dat$Rate), 10, f = ceiling)
     min_x <- round_any(min(dat$Rate), 10, f = floor)  
     
@@ -211,23 +208,7 @@ dPyramid <- function(startyear, endyear, data, colors=c("steelblue","firebrick")
     
     # For storyboarding
     if (endyear - startyear >= 1) {
-      d1 <- tack(d1, options = list( storyboard = "year",
-                                     chart = htmlwidgets::JS("
-                            function(){
-                            var self = this;
-                            // x axis should be first or [0] but filter to make sure
-                            self.axes.filter(function(ax){
-                            return ax.position == 'x'
-                            })[0] // now we have our x axis set _getFormat as before
-                            ._getFormat = function () {
-                            return function(d) {
-                            return d3.format(',.0f')(Math.abs(d) / 1000000) + 'm';
-                            };
-                            };
-                            // return self to return our chart
-                            return self;
-                            }
-                            ") ) )    
+      d1 <- tack(d1, options = list( storyboard = "year" ) )    
     }
     
     return(d1)
