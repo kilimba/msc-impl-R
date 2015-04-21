@@ -279,10 +279,11 @@ ui <- dashboardPage(
                   tags$p("(Uncheck to select specific year)")),
     conditionalPanel(
       condition = "input.doAnimate == false",
-      selectInput(    
-        inputId = "startyr",
-        label = "Select Pyramid Year",
-        c(2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014))
+#       selectInput(    
+#         inputId = "startyr",
+#         label = "Select Pyramid Year",
+#         c(2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014))
+    uiOutput("choose_year")
       
     ),
     
@@ -359,14 +360,27 @@ server <- function(input, output) {
           })
           
         }else{
-          output$distPlot <- renderDimple({
-            startyear <- as.numeric(input$startyr) 
-            # Start year and end year are equal we only want cross-sectional pyramid
-            # for a single selected year
-            dPyramid(startyear, startyear, data = outcome_data(),indicator = selected_indicator)
+          years <- as.vector(unique(outcome_data()$year))
+          output$choose_year <- renderUI({
+            selectInput("startyr", "Select Pyramid Year", years, width="95%")
+          })
+          
+          output$distPlot <- renderDimple({            
+            
+            if(!is.null(input$startyr)){
+              
+              startyear <- as.numeric(input$startyr) 
+              # Start year and end year are equal we only want cross-sectional pyramid
+              # for a single selected year
+              dPyramid(startyear, startyear, data = outcome_data(),indicator = selected_indicator)
+            }
+            
           })    
         }
       })
+      
+      
+      
       
     }
     
