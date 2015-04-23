@@ -208,7 +208,43 @@ dPyramid <- function(startyear, endyear, data, colors=c("steelblue","firebrick")
     
     # For storyboarding
     if (endyear - startyear >= 1) {
-      d1 <- tack(d1, options = list( storyboard = "year" ) )    
+      d1 <- tack(d1, options = list( storyboard = "year",
+                                     chart = htmlwidgets::JS("
+                            function(){
+                            var self = this;
+                            // x axis should be first or [0] but filter to make sure
+                            self.axes.filter(function(ax){
+                            return ax.position == 'x'
+                            })[0] // now we have our x axis set _getFormat as before
+                            ._getFormat = function () {
+                            return function(d) {
+                            return Math.abs(Math.round(d*100)/100);
+                            };
+                            };
+                            // return self to return our chart
+                            return self;
+                            }
+                            ")) )
+      d1 <- add_title(d1,html = paste("<h6 style='font-family:Helvetica; text-align: center;'>",indicator$label,",",startyear,"-",endyear,"</h3>"))
+      
+    }else{
+      d1 <- tack(d1, options = list( chart = htmlwidgets::JS("
+                            function(){
+                            var self = this;
+                            // x axis should be first or [0] but filter to make sure
+                            self.axes.filter(function(ax){
+                            return ax.position == 'x'
+                            })[0] // now we have our x axis set _getFormat as before
+                            ._getFormat = function () {
+                            return function(d) {
+                            return Math.abs(Math.round(d*100)/100);
+                            };
+                            };
+                            // return self to return our chart
+                            return self;
+                            }
+                            ")) )
+      d1 <- add_title(d1,html = paste("<h6 style='font-family:Helvetica; text-align: center;'>",indicator$label,",",startyear,"</h3>"))
     }
     
     return(d1)
@@ -247,7 +283,42 @@ dPyramid <- function(startyear, endyear, data, colors=c("steelblue","firebrick")
     
     # For storyboarding
     if (endyear - startyear >= 1) {
-      d1 <- tack(d1, options = list( storyboard = "year" ) )    
+      d1 <- tack(d1, options = list( storyboard = "year",
+                                     chart = htmlwidgets::JS("
+                            function(){
+                            var self = this;
+                            // x axis should be first or [0] but filter to make sure
+                            self.axes.filter(function(ax){
+                            return ax.position == 'x'
+                            })[0] // now we have our x axis set _getFormat as before
+                            ._getFormat = function () {
+                            return function(d) {
+                            return d3.format(',.0f')(Math.abs(d));
+                            };
+                            };
+                            // return self to return our chart
+                            return self;
+                            }
+                            ")) )
+      d1 <- add_title(d1,html = paste("<h6 style='font-family:Helvetica; text-align: center;'>",indicator$label,",",startyear,"-",endyear,"</h3>"))
+    }else{
+      d1 <- tack(d1, options = list(chart = htmlwidgets::JS("
+                            function(){
+                            var self = this;
+                            // x axis should be first or [0] but filter to make sure
+                            self.axes.filter(function(ax){
+                            return ax.position == 'x'
+                            })[0] // now we have our x axis set _getFormat as before
+                            ._getFormat = function () {
+                            return function(d) {
+                            return d3.format(',.0f')(Math.abs(d));
+                            };
+                            };
+                            // return self to return our chart
+                            return self;
+                            }
+                            ")) )  
+      d1 <- add_title(d1,html = paste("<h6 style='font-family:Helvetica; text-align: center;'>",indicator$label,",",startyear,"</h3>"))
     }
     
     return(d1)
@@ -279,10 +350,6 @@ ui <- dashboardPage(
                   tags$p("(Uncheck to select specific year)")),
     conditionalPanel(
       condition = "input.doAnimate == false",
-#       selectInput(    
-#         inputId = "startyr",
-#         label = "Select Pyramid Year",
-#         c(2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014))
     uiOutput("choose_year")
       
     ),
