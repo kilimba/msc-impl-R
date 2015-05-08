@@ -365,11 +365,9 @@ ui <- dashboardPage(
                 box(showOutput("distPlot2","nvd3",add_lib=F))
               ),
               fluidRow(
-                #box(infoBoxOutput("informationBox")),
                 infoBox("About", textOutput("caption"), icon = icon("info-circle"),width = 6),
                 
                 (
-                  #uiOutput("ggvis_ui"),
                   box(ggvisOutput("heatmap"))
                 )
               )                    
