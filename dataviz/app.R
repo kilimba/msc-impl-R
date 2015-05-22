@@ -10,7 +10,7 @@ library(rCharts)
 library(ggvis)
 library(reshape2)
 
-indicators <- read.csv(curl("https://raw.githubusercontent.com/kilimba/msc-impl-R/master/dataviz/data/testindicators.csv"))
+indicators <- read.csv("//acs-fs02/Shared/RDM/Datasets/Data Everywhere/Research Portal/indicators.csv")
 choices <- as.vector(indicators$label)
 indicators$label <- as.character(indicators$label)
 indicators$file <- paste("",indicators$file,"",sep="")
@@ -333,7 +333,7 @@ suppressMessages(
 
 ui <- dashboardPage(
   
-  dashboardHeader(title = "HealthData Viz"),
+  dashboardHeader(title = "Data Everywhere"),
   
   dashboardSidebar(
     sidebarMenu(
@@ -405,7 +405,7 @@ server <- function(input, output) {
       selected_indicator <- subset(indicators,indicators$label == selected_outcome)
       
       outcome_data <- reactive({
-        read.csv(curl(as.character(selected_indicator$file)))
+        read.csv((as.character(selected_indicator$file)))
       })
       
       d <- reactive({outcome_data()})
@@ -457,7 +457,7 @@ server <- function(input, output) {
       selected_indicator <- subset(indicators,indicators$label == selected_outcome)
       
       outcome_data <- reactive({
-        read.csv(curl(as.character(selected_indicator$file)))
+        read.csv((as.character(selected_indicator$file)))
       })
       
       d <- reactive({outcome_data()})

@@ -8,6 +8,8 @@ FROM DSRounds AS d
 WHERE (RoundType = 1) AND (ExtID < 97)
 order by d.EndEvent desc, d.StartEvent asc, d.ExtID ASC")
 
+#rounds <- sqlFetch(conn, "_DSRounds")
+
 dsSurveyA <- sqlQuery(conn, "SELECT     
 CASE 
   WHEN q.Acronym LIKE 'BSB' THEN 'Normal' 
@@ -133,8 +135,19 @@ getContingencyTable <- function(data){
   table <- cbind(table,Total)
   Total <- as.vector(margin.table(table,2))
   table <- rbind(table,Total)
+  totalArchived <<- table["60-Archived","Total"]
+  totalDocs <<- table["Total","Total"]
+  
   table <- as.data.frame.matrix(table)
   table <- table[rowSums(table)!=0, ] 
   table <- table[,colSums(table)!=0 ] 
   return(table)
+}
+
+getTotalArchived <- function(){
+  return(totalArchived)
+}
+
+getTotalDocs <- function(){
+  return(totalDocs)
 }

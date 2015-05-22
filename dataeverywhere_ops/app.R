@@ -1,5 +1,6 @@
 library(shiny)
 library(shinydashboard)
+library(googleVis)
 #source("dataeverywhere_ops/setup.R")
 rounds <- as.vector(unique(dsDSRoundA$Name))
 
@@ -24,8 +25,10 @@ ui <- dashboardPage(
           
         ),
         fluidRow(
-          box(),
-          box()
+          box(title = "Expected Completion Date", status = "primary", solidHeader = TRUE, background = "black"),
+          box(title = "Percent Archived", status = "primary", solidHeader = TRUE, background = "black",
+            htmlOutput("gauge")
+            )
         )
         )
       
@@ -41,16 +44,30 @@ server <- function(input, output) {
     selectInput("round", "Select Round", rounds, width="95%")
   })
   
-  observe({
-    cat(paste(!is.null(input$round),": ",str(input$round),"\n"))
+  observe({    
     if(!is.null(input$round)){
-      browser()
       round <- input$round
+      
       output$table <- renderTable({
-      getContingencyTable(getRoundData(subset(dsDSRoundA, dsDSRoundA$Name==input$round)["ExtID"]))
+        getContingencyTable(getRoundData(subset(dsDSRoundA, dsDSRoundA$Name==input$round)["ExtID"]))
       })
+      
+      output$gauge <- renderGvis({
+        percent <- round((getTotalArchived()/getTotalDocs())*100)
+        label <- "Archived"
+        dat <- cbind(label,percent)
+        df <- as.data.frame(dat, stringsAsFactors = FALSE)
+        df$percent <- as.numeric(df$percent)
+        gauge <- gvisGauge(df, options=list(min=0, max=100, greenFrom=70,
+                                            greenTo=100, yellowFrom=30, yellowTo=70,
+                                            redFrom=0, redTo=30))
+        return(gauge)
+      })
+      
     }
   })
+  
+  
   
 }
 
