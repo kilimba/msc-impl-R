@@ -108,7 +108,7 @@ dsDocumentStatus <- sqlQuery(conn,"SELECT
                              ORDER BY DS.DocumentStatus ASC")
 
 getRoundData <- function(round){
-  #browser()
+#   browser()
   rnd <- as.character(round)
   bundle <- dsBundleAFunction(rnd) 
   data <- subset(vacUnifiedReports,
@@ -120,6 +120,8 @@ getRoundData <- function(round){
   data <- subset(data, data$FieldWork %in% dsFieldworkerA$Fieldworker)
   data <- subset(data, data$DocumentStatus %in% dsDocumentStatus$DocumentStatus)
   data <- subset(data, data$Acronym %in% bundle$Acronym)
+  # Get unique weeks. Used to populate dropdown menu
+  weeks <<- data$Week
   data <- data[c('DSRound','Survey','Week','Section',
                  'Supervisor','FieldWork','DocumentStatus',
                  'Acronym')]
@@ -128,13 +130,26 @@ getRoundData <- function(round){
   return(data)
 }
 
+getWeeks <- function(){
+  return(weeks)
+}
+
 getRoundDataPerWeek <- function(data,week){
   weekdata <- subset(data, data$Week == week)
   return(weekdata)
 }
 
 getContingencyTable <- function(data,type){
-  table <- table(data$DocumentStatus,data$Survey)  
+  if(type == "va"){
+    table <- table(data$DocumentStatus,data$YearOfDeath) 
+  }else{
+    table <- table(data$DocumentStatus,data$Survey)
+  }
+  # If type is individual, strip away unwanted variables
+  if(type == "individual"){
+    table <- table[,"Resident"]
+  }
+  
   Total <- margin.table(table,1)
   table <- cbind(table,Total)
   Total <- as.vector(margin.table(table,2))

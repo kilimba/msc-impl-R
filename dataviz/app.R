@@ -365,9 +365,11 @@ ui <- dashboardPage(
                 box(showOutput("distPlot2","nvd3",add_lib=F))
               ),
               fluidRow(
+                #box(infoBoxOutput("informationBox")),
                 infoBox("About", textOutput("caption"), icon = icon("info-circle"),width = 6),
                 
                 (
+                  #uiOutput("ggvis_ui"),
                   box(ggvisOutput("heatmap"))
                 )
               )                    
@@ -405,7 +407,7 @@ server <- function(input, output) {
       selected_indicator <- subset(indicators,indicators$label == selected_outcome)
       
       outcome_data <- reactive({
-        read.csv((as.character(selected_indicator$file)))
+        read.csv(as.character(selected_indicator$file))
       })
       
       d <- reactive({outcome_data()})
@@ -457,7 +459,7 @@ server <- function(input, output) {
       selected_indicator <- subset(indicators,indicators$label == selected_outcome)
       
       outcome_data <- reactive({
-        read.csv((as.character(selected_indicator$file)))
+        read.csv(as.character(selected_indicator$file))
       })
       
       d <- reactive({outcome_data()})
