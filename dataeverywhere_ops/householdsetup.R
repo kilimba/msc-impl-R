@@ -108,7 +108,7 @@ dsDocumentStatus <- sqlQuery(conn,"SELECT
                              ORDER BY DS.DocumentStatus ASC")
 
 getRoundData <- function(round){
-#   browser()
+  # browser()
   rnd <- as.character(round)
   bundle <- dsBundleAFunction(rnd) 
   data <- subset(vacUnifiedReports,
@@ -121,7 +121,7 @@ getRoundData <- function(round){
   data <- subset(data, data$DocumentStatus %in% dsDocumentStatus$DocumentStatus)
   data <- subset(data, data$Acronym %in% bundle$Acronym)
   # Get unique weeks. Used to populate dropdown menu
-  weeks <<- data$Week
+  weeks <<- sort(unique(data$Week))
   data <- data[c('DSRound','Survey','Week','Section',
                  'Supervisor','FieldWork','DocumentStatus',
                  'Acronym')]
@@ -139,29 +139,50 @@ getRoundDataPerWeek <- function(data,week){
   return(weekdata)
 }
 
-getContingencyTable <- function(data,type){
+getContingencyTable <- function(data,type,period){
+  #browser()
   if(type == "va"){
+    # Cross Tab of DocumentStatus and Year
     table <- table(data$DocumentStatus,data$YearOfDeath) 
+    # Cross Tab of Section and Year
+    tab2 <<- table(data$Section,data$YearOfDeath)
+  }else if(type == "individual"){    
+    data <- subset(data, data$Survey == "Resident")
+    # Cross Tab of DocumentStatus and Survey
+    table <- table(data$DocumentStatus,data$Survey)
+    # Cross Tab of Section and Survey
+    tab2 <<- table(data$Section,data$Survey)
   }else{
     table <- table(data$DocumentStatus,data$Survey)
+    tab2 <- table(data$Section,data$Survey)
   }
-  # If type is individual, strip away unwanted variables
-  if(type == "individual"){
-    table <- table[,"Resident"]
-  }
+  
+  #browser()
   
   Total <- margin.table(table,1)
   table <- cbind(table,Total)
+  
+  Total <- margin.table(tab2,1)
+  tab2 <- cbind(tab2,Total)
+  
   Total <- as.vector(margin.table(table,2))
   table <- rbind(table,Total)
+  
+  Total <- as.vector(margin.table(tab2,2))
+  table <- rbind(tab2,Total)
+  
+  table <- as.data.frame(table)
+  tab2 <- as.data.frame(tab2)
   
   # 60 represents a document status of "Archived"
   # Wrapped in tryCatch() function to handle cases where this data is not available
   totalArchived <<- tryCatch(
     {
-      table["60","Total"]
+      archived <- c("60","90","91","92","95","97","99","100")
+      sum(table[archived,]["Total"],na.rm = TRUE)
     },
-     error = function(cond) {       
+     error = function(err) {   
+       print(paste("MY_ERROR:  ",err))
        # Choose a return value in case of error
        return(0)
      }
@@ -171,7 +192,11 @@ getContingencyTable <- function(data,type){
   # 20 represents a document status of "Collated for Distribution"
   totalField <-  tryCatch(
     {
-      table["20","Total"]
+      # The cumulation of docs currently in field and having passed through field
+      field = c("20","21","25","30","31","32","33","34","35","36","39","40",
+                "50","51","52","55","56","60","90","91","92","95","97","99","100")
+      sum(table[field,]["Total"],na.rm = TRUE)
+      
     },
   error = function(cond) {       
     # Choose a return value in case of error
@@ -183,7 +208,8 @@ getContingencyTable <- function(data,type){
   # 50 represents a document status of "Captured"
   totalCaptured <- tryCatch(
     {
-      table["50","Total"]
+      captured <- c("50","51","52","55","56","60","90","91","92","95","97","99","100")
+      sum(table[captured,]["Total"],na.rm = TRUE)
     },
     error = function(cond) {       
     # Choose a return value in case of error
@@ -214,10 +240,35 @@ getContingencyTable <- function(data,type){
     
   }
   
-  table <- as.data.frame.matrix(table)
+  
   table <- table[rowSums(table)!=0, ] 
   table <- table[,colSums(table)!=0 ]
-
+  
+#   tab2 <- table[rowSums(table)!=0, ]
+#   tab2 <<- table[,colSums(table)!=0 ]
+  
+#   weekData4Viz <<- list()
+#   roundData4Viz <<- list()
+#   
+#   if(type == "household"){
+#     if(period == "round"){
+#       roundData4Viz$household <- table
+#     }else if(period == "week"){
+#       weekData4Viz$household <- tab2
+#     }    
+#   }else if(type == "individual"){
+#     if(period == "round"){
+#       roundData4Viz$individual <- table
+#     }else if(period == "week"){
+#       weekData4Viz$household <- tab2
+#     }
+#   }else (type == "va"){
+#     if(period == "round"){
+#       roundData4Viz$va <- table
+#     }else if(period == "week"){
+#       weekData4Viz$va <- tab2
+#     }
+#   }
   
   return(table)
 }

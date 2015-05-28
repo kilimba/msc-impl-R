@@ -7,7 +7,7 @@ library(googleVis)
 # source("dataeverywhere_ops/individualsetup.R")
 # source("dataeverywhere_ops/vasetup.R")
 
-rounds <- as.vector(unique(dsDSRoundA$Name))
+roundsA <- as.vector(unique(dsDSRoundA$Name))
 
 ui <- dashboardPage(
   dashboardHeader(title = "Data Operations"),
@@ -18,10 +18,10 @@ ui <- dashboardPage(
       menuItem("Individuals", tabName = "typeB",icon = icon("group")),
       menuItem("Verbal Autopsy", tabName = "typeC",icon = icon("plus-square"))
       
-    ),
-    tags$br(),
-    uiOutput("choose_round"),
-    uiOutput("choose_week")
+    )
+#     tags$br(),
+#     uiOutput("choose_round"),
+#     uiOutput("choose_week")
   ),
   dashboardBody(
     tabItems(
@@ -61,11 +61,14 @@ ui <- dashboardPage(
           box(title = "Individual Contact Rate & Refusals", status = "primary", solidHeader = TRUE, background = "black"
           )
         )
-      ),
-      tabItem(tabName = "typeA",
+      )
+      ,tabItem(tabName = "typeA",
               fluidRow(
-                box(title = "Select Week", width = 2,status = "primary", solidHeader = TRUE, background = "black"),
-                box(title = "Household Document Status", width = 10,status = "primary", solidHeader = TRUE, background = "black")
+                box(uiOutput("choose_round"),uiOutput("choose_week"),title = "Select Round Week", width = 3,status = "primary", solidHeader = TRUE, background = "black"),
+                box(htmlOutput("hhdcgaugeweek"),width = 3, title = "HH Data Collection", status = "primary", solidHeader = TRUE, background = "black"),
+                box(htmlOutput("hhdegaugeweek"),width = 3, title = "HH Data Entry", status = "primary", solidHeader = TRUE, background = "black"),
+                box(htmlOutput("hhdagaugeweek"),width = 3, title = "HH Document Archiving", status = "primary", solidHeader = TRUE, background = "black")
+                
               ),  
               
               fluidRow(
@@ -81,24 +84,33 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output) { 
-  
-  output$choose_round <- renderUI({
-    selectInput("round", "Select Round", rounds, width="95%")
-  })
-  
-  observe({    
-    if(!is.null(input$round)){
-      roundData <<- getRoundData(subset(dsDSRoundA, dsDSRoundA$Name==input$round)["ExtID"])
-    }
     
-    observe({
+  
+  #observe({  
+    
+    #if(TRUE){
+      roundData <<- getRoundData(dsDSRoundA[1,]["ExtID"])
+    #}
+    # Dynamic creation of select input for selecting round of interest
+    # in Household page
+    output$choose_round <- renderUI({
+      selectInput("round", "Select Round", roundsA)
+    })
+    
+    # Dynamic creation of select input for selecting week of interest
+    # in Household page        
+    output$choose_week <- renderUI({
+      selectInput("week", "Select Week", getWeeks())
+    })
+    
+    #observe({
       
-      if(!is.null(input$round)){
+      #if(TRUE){
         contingencyTable <- getContingencyTable(roundData,"household")
         
         output$hhdcgauge <- renderGvis({
-          percent <- round((getTotalField("household")/getTotalDocs("household"))*100)
-          label <- "Field"
+          percent <- round((getTotalField("household")/getTotalDocs("household"))*100,digits = 2)
+          label <- "Field %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -110,8 +122,8 @@ server <- function(input, output) {
         
         output$hhdegauge <- renderGvis({
           #browser()
-          percent <- round((getTotalCaptured("household")/getTotalDocs("household"))*100)
-          label <- "Captured"
+          percent <- round((getTotalCaptured("household")/getTotalDocs("household"))*100,digits = 2)
+          label <- "Captured %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -123,8 +135,8 @@ server <- function(input, output) {
         
         output$hhdagauge <- renderGvis({
           #browser()
-          percent <- round((getTotalArchived("household")/getTotalDocs("household"))*100)
-          label <- "Archived"
+          percent <- round((getTotalArchived("household")/getTotalDocs("household"))*100,digits = 2)
+          label <- "Archived %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -142,8 +154,8 @@ server <- function(input, output) {
         indContingencyTable <- getContingencyTable(indData,"individual")
         
         output$inddcgauge <- renderGvis({
-          percent <- round((getTotalField("individual")/getTotalDocs("individual"))*100)
-          label <- "Field"
+          percent <- round((getTotalField("individual")/getTotalDocs("individual"))*100,digits = 2)
+          label <- "Field %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -154,8 +166,8 @@ server <- function(input, output) {
         })
         
         output$inddegauge <- renderGvis({
-          percent <- round((getTotalCaptured("individual")/getTotalDocs("individual"))*100)
-          label <- "Captured"
+          percent <- round((getTotalCaptured("individual")/getTotalDocs("individual"))*100,digits = 2)
+          label <- "Captured %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -166,8 +178,8 @@ server <- function(input, output) {
         })
         
         output$inddagauge <- renderGvis({
-          percent <- round((getTotalArchived("individual")/getTotalDocs("individual"))*100)
-          label <- "Archived"
+          percent <- round((getTotalArchived("individual")/getTotalDocs("individual"))*100,digits = 2)
+          label <- "Archived %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -185,8 +197,8 @@ server <- function(input, output) {
         vaContingencyTable <- getContingencyTable(vaData,"va")
         
         output$vadcgauge <- renderGvis({
-          percent <- round((getTotalField("va")/getTotalDocs("va"))*100)
-          label <- "Field"
+          percent <- round((getTotalField("va")/getTotalDocs("va"))*100,digits = 2)
+          label <- "Field %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -197,8 +209,8 @@ server <- function(input, output) {
         })
         
         output$vadegauge <- renderGvis({
-          percent <- round((getTotalCaptured("va")/getTotalDocs("va"))*100)
-          label <- "Captured"
+          percent <- round((getTotalCaptured("va")/getTotalDocs("va"))*100,digits = 2)
+          label <- "Captured %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -209,8 +221,8 @@ server <- function(input, output) {
         })
         
         output$vadagauge <- renderGvis({
-          percent <- round((getTotalArchived("va")/getTotalDocs("va"))*100)
-          label <- "Archived"
+          percent <- round((getTotalArchived("va")/getTotalDocs("va"))*100,digits = 2)
+          label <- "Archived %"
           dat <- cbind(label,percent)
           df <- as.data.frame(dat, stringsAsFactors = FALSE)
           df$percent <- as.numeric(df$percent)
@@ -220,13 +232,61 @@ server <- function(input, output) {
           return(gauge)
         })
         
-        
-      }
+    observe({
+        if(!is.null(input$round)){
+          roundData <- getRoundData(subset(dsDSRoundA,dsDSRoundA$Name==input$round)["ExtID"])
+          if(!is.null(input$week)){
+            weekData <- getRoundDataPerWeek(roundData, input$week)
+            table <- getContingencyTable(data = weekData,type = "household")
+            
+            output$hhdcgaugeweek <- renderGvis({
+              percent <- round((getTotalField("household")/getTotalDocs("household"))*100,digits = 2)
+              label <- "Field %"
+              dat <- cbind(label,percent)
+              df <- as.data.frame(dat, stringsAsFactors = FALSE)
+              df$percent <- as.numeric(df$percent)
+              gauge <- gvisGauge(df, options=list(min=0, max=100, greenFrom=70,
+                                                  greenTo=100, yellowFrom=30, yellowTo=70,
+                                                  redFrom=0, redTo=30))
+              return(gauge)
+            })
+            
+            output$hhdegaugeweek <- renderGvis({
+              percent <- round((getTotalCaptured("household")/getTotalDocs("household"))*100,digits = 2)
+              label <- "Captured %"
+              dat <- cbind(label,percent)
+              df <- as.data.frame(dat, stringsAsFactors = FALSE)
+              df$percent <- as.numeric(df$percent)
+              gauge <- gvisGauge(df, options=list(min=0, max=100, greenFrom=70,
+                                                  greenTo=100, yellowFrom=30, yellowTo=70,
+                                                  redFrom=0, redTo=30))
+              return(gauge)
+            })
+            
+            output$hhdagaugeweek <- renderGvis({
+              percent <- round((getTotalArchived("household")/getTotalDocs("household"))*100,digits = 2)
+              label <- "Archived %"
+              dat <- cbind(label,percent)
+              df <- as.data.frame(dat, stringsAsFactors = FALSE)
+              df$percent <- as.numeric(df$percent)
+              gauge <- gvisGauge(df, options=list(min=0, max=100, greenFrom=70,
+                                                  greenTo=100, yellowFrom=30, yellowTo=70,
+                                                  redFrom=0, redTo=30))
+              return(gauge)
+            })
+          }
+        }else{
+          return(NULL)
+        }
     })
+        
+      #}
+    #})
     
     
     
-  })
+    
+  #})
 }
 
 shinyApp(ui, server)
