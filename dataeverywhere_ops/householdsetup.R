@@ -145,13 +145,13 @@ getContingencyTable <- function(data,type,period){
     # Cross Tab of DocumentStatus and Year
     table <- table(data$DocumentStatus,data$YearOfDeath) 
     # Cross Tab of Section and Year
-    tab2 <<- table(data$Section,data$YearOfDeath)
+    tab2 <- table(data$Section,data$YearOfDeath)
   }else if(type == "individual"){    
     data <- subset(data, data$Survey == "Resident")
     # Cross Tab of DocumentStatus and Survey
     table <- table(data$DocumentStatus,data$Survey)
     # Cross Tab of Section and Survey
-    tab2 <<- table(data$Section,data$Survey)
+    tab2 <- table(data$Section,data$Survey)
   }else{
     table <- table(data$DocumentStatus,data$Survey)
     tab2 <- table(data$Section,data$Survey)
@@ -244,31 +244,31 @@ getContingencyTable <- function(data,type,period){
   table <- table[rowSums(table)!=0, ] 
   table <- table[,colSums(table)!=0 ]
   
-#   tab2 <- table[rowSums(table)!=0, ]
-#   tab2 <<- table[,colSums(table)!=0 ]
+  tab2 <- table[rowSums(table)!=0, ]
+  tab2 <- table[,colSums(table)!=0 ]
   
-#   weekData4Viz <<- list()
-#   roundData4Viz <<- list()
-#   
-#   if(type == "household"){
-#     if(period == "round"){
-#       roundData4Viz$household <- table
-#     }else if(period == "week"){
-#       weekData4Viz$household <- tab2
-#     }    
-#   }else if(type == "individual"){
-#     if(period == "round"){
-#       roundData4Viz$individual <- table
-#     }else if(period == "week"){
-#       weekData4Viz$household <- tab2
-#     }
-#   }else (type == "va"){
-#     if(period == "round"){
-#       roundData4Viz$va <- table
-#     }else if(period == "week"){
-#       weekData4Viz$va <- tab2
-#     }
-#   }
+  weekData4Viz <<- list()
+  roundData4Viz <<- list()
+  
+  if(type == "household"){
+    if(period == "round"){
+      roundData4Viz$household <<- table
+    }else if(period == "week"){
+      weekData4Viz$household <<- tab2
+    }    
+  }else if(type == "individual"){
+    if(period == "round"){
+      roundData4Viz$individual <<- table
+    }else if(period == "week"){
+      weekData4Viz$household <<- tab2
+    }
+  }else if(type == "va"){
+    if(period == "round"){
+      roundData4Viz$va <<- table
+    }else if(period == "week"){
+      weekData4Viz$va <<- tab2
+    }
+  }
   
   return(table)
 }

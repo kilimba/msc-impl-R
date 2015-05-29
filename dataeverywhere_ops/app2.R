@@ -72,7 +72,7 @@ ui <- dashboardPage(
               ),  
               
               fluidRow(
-                box(title = "Household Document Status Chart",width = 12, status = "primary", solidHeader = TRUE, background = "black")
+                box(tableOutput("table"), title = "Household Document Statuses",width = 12, status = "primary", solidHeader = TRUE, background = "black")
                 
               ) 
               
@@ -106,7 +106,7 @@ server <- function(input, output) {
     #observe({
       
       #if(TRUE){
-        contingencyTable <- getContingencyTable(roundData,"household")
+        contingencyTable <- getContingencyTable(roundData,"household",period = "round")
         
         output$hhdcgauge <- renderGvis({
           percent <- round((getTotalField("household")/getTotalDocs("household"))*100,digits = 2)
@@ -151,7 +151,7 @@ server <- function(input, output) {
         #################################################################
         
         indData <- getIndividualRoundData(getCurrentRound())
-        indContingencyTable <- getContingencyTable(indData,"individual")
+        indContingencyTable <- getContingencyTable(indData,"individual","round")
         
         output$inddcgauge <- renderGvis({
           percent <- round((getTotalField("individual")/getTotalDocs("individual"))*100,digits = 2)
@@ -194,7 +194,7 @@ server <- function(input, output) {
         #############################################################################
         
         vaData <-  getVAData()
-        vaContingencyTable <- getContingencyTable(vaData,"va")
+        vaContingencyTable <- getContingencyTable(vaData,"va","round")
         
         output$vadcgauge <- renderGvis({
           percent <- round((getTotalField("va")/getTotalDocs("va"))*100,digits = 2)
@@ -237,7 +237,7 @@ server <- function(input, output) {
           roundData <- getRoundData(subset(dsDSRoundA,dsDSRoundA$Name==input$round)["ExtID"])
           if(!is.null(input$week)){
             weekData <- getRoundDataPerWeek(roundData, input$week)
-            table <- getContingencyTable(data = weekData,type = "household")
+            table <- getContingencyTable(data = weekData,type = "household",period = "week")
             
             output$hhdcgaugeweek <- renderGvis({
               percent <- round((getTotalField("household")/getTotalDocs("household"))*100,digits = 2)
@@ -274,6 +274,11 @@ server <- function(input, output) {
                                                   redFrom=0, redTo=30))
               return(gauge)
             })
+            
+            output$table <- renderTable({
+              return(weekData4Viz$household)
+            })
+            
           }
         }else{
           return(NULL)
