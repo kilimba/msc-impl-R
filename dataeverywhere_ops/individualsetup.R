@@ -9,7 +9,7 @@ dsDSRoundB <- sqlQuery(conn,"SELECT
               --ORDER BY ExtID DESC
               ORDER BY d.EndEvent DESC, d.ExtID ASC")
 
-dsDSRoundACurrent <- sqlQuery(conn,"SELECT TOP 1
+dsDSRoundBCurrent <- sqlQuery(conn,"SELECT TOP 1
                               ExtID
                               , RIGHT(Name, 3) AS Name
                               FROM DSRounds AS d
@@ -17,7 +17,7 @@ dsDSRoundACurrent <- sqlQuery(conn,"SELECT TOP 1
                               ORDER BY d.EndEvent DESC, ExtID ASC")
 
 getCurrentRound <- function(){  
-  return(dsDSRoundACurrent[,"ExtID"])  
+  return(dsDSRoundBCurrent[,"ExtID"])  
 }
 
 dsSurveyB <- sqlQuery(conn,"SELECT     

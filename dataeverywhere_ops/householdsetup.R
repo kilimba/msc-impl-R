@@ -8,6 +8,8 @@ dsDSRoundA <- sqlQuery(conn,"SELECT ExtID, RIGHT(Name, 3) AS Name
                        WHERE (RoundType = 1) AND (ExtID < 97)
                        order by d.EndEvent desc, d.StartEvent asc, d.ExtID ASC")
 
+consentData <- sqlQuery(conn,"SELECT * FROM [ETL_Staging].[dbo].[DE01-HIV Consent Rate]")
+
 #rounds <- sqlFetch(conn, "_DSRounds")
 
 dsSurveyA <- sqlQuery(conn, "SELECT     
@@ -108,7 +110,7 @@ dsDocumentStatus <- sqlQuery(conn,"SELECT
                              ORDER BY DS.DocumentStatus ASC")
 
 getRoundData <- function(round){
-  # browser()
+   #browser()
   rnd <- as.character(round)
   bundle <- dsBundleAFunction(rnd) 
   data <- subset(vacUnifiedReports,
@@ -146,7 +148,8 @@ getContingencyTable <- function(data,type,period){
     table <- table(data$DocumentStatus,data$YearOfDeath) 
     # Cross Tab of Section and Year
     tab2 <- table(data$Section,data$YearOfDeath)
-  }else if(type == "individual"){    
+  }else if(type == "individual"){ 
+    #browser()
     data <- subset(data, data$Survey == "Resident")
     # Cross Tab of DocumentStatus and Survey
     table <- table(data$DocumentStatus,data$Survey)
@@ -169,7 +172,7 @@ getContingencyTable <- function(data,type,period){
   table <- rbind(table,Total)
   
   Total <- as.vector(margin.table(tab2,2))
-  table <- rbind(tab2,Total)
+  tab2 <- rbind(tab2,Total)
   
   table <- as.data.frame(table)
   tab2 <- as.data.frame(tab2)
@@ -244,8 +247,8 @@ getContingencyTable <- function(data,type,period){
   table <- table[rowSums(table)!=0, ] 
   table <- table[,colSums(table)!=0 ]
   
-  tab2 <- table[rowSums(table)!=0, ]
-  tab2 <- table[,colSums(table)!=0 ]
+  tab2 <- tab2[rowSums(tab2)!=0, ]
+  tab2 <- tab2[,colSums(tab2)!=0 ]
   
   weekData4Viz <<- list()
   roundData4Viz <<- list()
@@ -260,7 +263,7 @@ getContingencyTable <- function(data,type,period){
     if(period == "round"){
       roundData4Viz$individual <<- table
     }else if(period == "week"){
-      weekData4Viz$household <<- tab2
+      weekData4Viz$individual <<- tab2
     }
   }else if(type == "va"){
     if(period == "round"){
