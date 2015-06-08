@@ -2,15 +2,16 @@
 library(shiny)
 library(shinydashboard)
 library(googleVis)
+library(rCharts)
 
-source("dataeverywhere_ops/householdsetup.R")
-source("dataeverywhere_ops/individualsetup.R")
-source("dataeverywhere_ops/vasetup.R")
+# source("dataeverywhere_ops/householdsetup.R")
+# source("dataeverywhere_ops/individualsetup.R")
+# source("dataeverywhere_ops/vasetup.R")
 
 roundsA <- as.vector(unique(dsDSRoundA$Name))
 roundsB <- as.vector(rev(sort(dsDSRoundB$ExtID)))
 yearsOfDeath <- as.vector(dsYearOfDeath$YearOfDeath)
-vadata <- getVAData()
+vadata <<- getVAData()
 
 ui <- dashboardPage(
   dashboardHeader(title = "Data Operations"),
@@ -66,8 +67,8 @@ ui <- dashboardPage(
         ),
         
         fluidRow(
-          box(title = "Household Refusals", status = "primary", solidHeader = TRUE, background = "black"),
-          box(title = "Individual Contact Rate & Refusals", status = "primary", solidHeader = TRUE, background = "black"
+          box(title = "Household Refusals",width = 6, status = "primary", solidHeader = TRUE, background = "black"),
+          box(showOutput("consentRate",lib="nvd3"), width = 6,title = "HIV Consent & Refusal Rate", status = "primary", solidHeader = TRUE
           )
         )
       )
@@ -451,13 +452,15 @@ server <- function(input, output) {
     
   })
   
-  #}
-  #})
-  
-  
-  
-  
-  #})
+  output$consentRate <-  renderChart2({    
+    p2 <- nPlot(HIVConsentRate ~ YEAR, 
+                group = 'HIVRefused', 
+                data = consentData, 
+                type = 'stackedAreaChart',
+                height = 250,
+                width = 500 )
+    return(p2)
+  })
 }
 
 shinyApp(ui, server)

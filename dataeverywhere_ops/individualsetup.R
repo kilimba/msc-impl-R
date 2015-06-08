@@ -3,11 +3,11 @@
 
 dsDSRoundB <- sqlQuery(conn,"SELECT
               d.ExtID
-              , RIGHT(Name, 3) + '  ('+ CAST(d.ExtID AS VARCHAR) +')' AS NAME
+              , RIGHT(Name, 3) + '  ('+ CAST(d.ExtID AS VARCHAR) +')' AS NAME 
               FROM DSRounds AS d
               WHERE (RoundType = 2) 
               --ORDER BY ExtID DESC
-              ORDER BY d.EndEvent DESC, d.ExtID ASC")
+              ORDER BY d.EndEvent DESC, d.ExtID ASC") 
 
 dsDSRoundBCurrent <- sqlQuery(conn,"SELECT TOP 1
                               ExtID

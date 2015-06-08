@@ -1,14 +1,17 @@
 library(RODBC)
 conn <- odbcConnect("unifiedReports")
 
-vacUnifiedReports <- sqlFetch(conn, "vacUnifiedReports")
+vacUnifiedReports <<- sqlFetch(conn, "vacUnifiedReports")
 
 dsDSRoundA <- sqlQuery(conn,"SELECT ExtID, RIGHT(Name, 3) AS Name
                        FROM DSRounds AS d
                        WHERE (RoundType = 1) AND (ExtID < 97)
                        order by d.EndEvent desc, d.StartEvent asc, d.ExtID ASC")
 
-consentData <- sqlQuery(conn,"SELECT * FROM [ETL_Staging].[dbo].[DE01-HIV Consent Rate]")
+consentData <<- sqlQuery(conn,"SELECT * FROM [ETL_Staging].[dbo].[DE01-HIV Consent Rate]")
+consentData$HIVRefused <- ifelse(consentData$HIVRefused=='Y','Refused','Consented')
+hhRefusalData <<- sqlQuery(conn,"SELECT RefusalRegisteredIndividual,RefusalHousehold,
+                           RefusalWholeBS,AvoidIndividual,AvoidBoundedStructure from Refusals")
 
 #rounds <- sqlFetch(conn, "_DSRounds")
 
