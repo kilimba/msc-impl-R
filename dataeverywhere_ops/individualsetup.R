@@ -130,7 +130,7 @@ ds.DocumentStatus
 FROM DocumentStatuses ds
 ORDER BY DS.DocumentStatus ASC")
 
-getIndividualRoundData <- function(round){
+getIndividualRoundData <- function(round,vacUnifiedReports){
   
   rnd <- as.character(round)
   bundle <- dsBundleBFunction(rnd)

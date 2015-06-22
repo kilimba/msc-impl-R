@@ -7,9 +7,13 @@ dsYearOfDeath <- sqlQuery(conn,"select distinct
                           order by vrd.YearOfDeath desc")
 
 
-vacvaUnifiedReportDeaths <- sqlFetch(conn,"vacvaUnifiedReportDeaths")
+#vacvaUnifiedReportDeaths <- sqlFetch(conn,"vacvaUnifiedReportDeaths")
 
-getVAData <- function(){
+getvacvaUnifiedReportDeaths <- function(conn){
+  sqlFetch(conn,"vacvaUnifiedReportDeaths")
+}
+
+getVAData <- function(vacUnifiedReports, vacvaUnifiedReportDeaths){
   data <- subset(vacUnifiedReports, vacUnifiedReports$RoundType == 3)
   data <- sqldf("select * from data where Acronym like 'VAN%'")
   deaths <- subset(vacvaUnifiedReportDeaths, vacvaUnifiedReportDeaths$YearOfDeath %in% dsYearOfDeath$YearOfDeath)
