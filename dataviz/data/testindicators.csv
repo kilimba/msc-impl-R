@@ -1,5 +1,0 @@
-label,file,rate,multiplier,description
-Disease Outcome 1,https://raw.githubusercontent.com/kilimba/msc-impl-R/master/dataviz/data/diseaseoutcome1.csv,N,,Disease outcome 1 is not a rate but is based on absolute counts
-Disease Outcome 2,https://raw.githubusercontent.com/kilimba/msc-impl-R/master/dataviz/data/diseaseoutcome2.csv,N,,Disease outcome 2 is not a rate but is based on absolute counts
-Disease Outcome 3,https://raw.githubusercontent.com/kilimba/msc-impl-R/master/dataviz/data/diseaseoutcome3.csv,Y,1000,Disease outcome 3 is a rate per 1000 population
-Disease Outcome 4,https://raw.githubusercontent.com/kilimba/msc-impl-R/master/dataviz/data/diseaseoutcome4.csv,Y,100,Disease outcome 4 is a rate per 100 population
