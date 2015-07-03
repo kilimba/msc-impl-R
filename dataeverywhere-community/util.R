@@ -24,7 +24,12 @@ for(i in language$language){
   indvariables[,i] <- as.character(indvariables[,i])
 } 
 
+indresponse <- sqlFetch(conn,"indresponse")
 
+# Change to lowercase all language responses
+for(i in language$language){
+  indresponse[,i] <- tolower(indresponse[,i])
+}
 
 getHSEData <- function(){
   if(file.exists("//acs-fs02/Shared/RDM/Datasets/ACDIS/201501/Modules/HSE/Households/RD06-99 ACDIS HSE-H All.rds")){
@@ -48,7 +53,9 @@ getIndividualData <- function(){
   
 }
 
-hsedata <- getHSEData()
+hhdata <- getHSEData()
+inddata <- getIndividualData()
+
 
 hhCounts <- sqlQuery(conn,"select  DATEPART(YEAR,VisitDate) as Year,COUNT(HHIntId)as Count from vacHSE_Households
 GROUP BY DATEPART(YEAR,VisitDate)
@@ -79,11 +86,18 @@ getDataFrame <- function(table){
   return(as.data.frame(table,stringsAsFactors = F))
 }
 
-getData <- function(variable){
+getData <- function(variable,type){
   #browser()
   responsevar <- variable
-  data <- hsedata
-  validresponse <- subset(hhresponse,hhresponse$variable == responsevar)
+  if(type == "household"){
+    data <- hhdata
+    validresponse <- subset(hhresponse,hhresponse$variable == responsevar)
+  }else if(type == "individual"){
+    data <- inddata
+    validresponse <- subset(indresponse,indresponse$variable == responsevar)
+  }
+  
+  
   data <- addYearCol(data)
   table <- getTable(data,variable)
   getYearlyTotals(table)
